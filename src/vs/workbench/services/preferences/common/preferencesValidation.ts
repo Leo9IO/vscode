@@ -23,6 +23,7 @@ export function createValidator(prop: IConfigurationPropertySchema): (value: any
 	const numericValidations = getNumericValidators(prop);
 	const stringValidations = getStringValidators(prop);
 	const stringArrayValidator = getArrayOfStringValidator(prop);
+	const uriValidations = getUriValidators(prop);
 
 	return value => {
 		if (prop.type === 'string' && stringValidations.length === 0) { return null; }
@@ -46,6 +47,10 @@ export function createValidator(prop: IConfigurationPropertySchema): (value: any
 
 		if (prop.type === 'string') {
 			errors.push(...stringValidations.filter(validator => !validator.isValid('' + value)).map(validator => validator.message));
+		}
+
+		if (prop.format === 'uri' || prop.format === 'uri-reference') {
+			errors.push(...uriValidations.filter(validator => !validator.isValid('' + value)).map(validator => validator.message));
 		}
 
 		if (errors.length) {
@@ -250,4 +255,28 @@ function getArrayOfStringValidator(prop: IConfigurationPropertySchema): ((value:
 	return null;
 }
 
+function getUriValidators(prop: IConfigurationPropertySchema): Validator<string | null>[] {
+	const uriRegex = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
+	return [
+		{
+			enabled: prop.format === 'uri' || prop.format === 'uri-reference',
+			isValid: ((value: string | null) => value ? !!value.length : false),
+			message: nls.localize('validations.uriEmpty', "URI expected.")
+		},
+		{
+			enabled: prop.format === 'uri' || prop.format === 'uri-reference',
+			isValid: ((value: string | null) => value ? uriRegex.test(value) : false),
+			message: nls.localize('validations.uriMissing', "URI is expected.")
+		},
+		{
+			enabled: prop.format === 'uri',
+			isValid: ((value: string | null) => hasUriScheme(value, uriRegex)),
+			message: nls.localize('validations.uriSchemeMissing', "URI with a scheme is expected.")
+		},
+	].filter(validation => validation.enabled);
+}
 
+function hasUriScheme(value: string | null, uriRegex: RegExp): boolean {
+	const matches = value?.match(uriRegex);
+	return !!(matches && matches[2]);
+}
