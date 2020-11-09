@@ -373,4 +373,15 @@ suite('Preferences Validation', () => {
 		testInvalidTypeError([null], 'null', false);
 		testInvalidTypeError('null', 'null', false);
 	});
+
+	test('uri checks work', () => {
+		const tester = new Tester({ format: 'uri' });
+		tester.accepts('example.com');
+		tester.accepts('www.example.com');
+		tester.accepts('http://www.example.com');
+		tester.accepts('https://www.example.com');
+		tester.accepts('example/example.html');
+		tester.rejects('');
+		tester.rejects('example');
+	});
 });
