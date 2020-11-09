@@ -375,13 +375,18 @@ suite('Preferences Validation', () => {
 	});
 
 	test('uri checks work', () => {
-		const tester = new Tester({ format: 'uri' });
-		tester.accepts('example.com');
-		tester.accepts('www.example.com');
-		tester.accepts('http://www.example.com');
-		tester.accepts('https://www.example.com');
-		tester.accepts('example/example.html');
+		const tester = new Tester({ type: 'string', format: 'uri' });
+		tester.rejects('example.com');
+		tester.rejects('example.com/example');
+		tester.rejects('example/example.html');
+		tester.rejects('www.example.com');
 		tester.rejects('');
+		tester.rejects(' ');
 		tester.rejects('example');
+
+		tester.accepts('https:');
+		tester.accepts('https://');
+		tester.accepts('https://example.com');
+		tester.accepts('https://www.example.com');
 	});
 });
